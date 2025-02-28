@@ -1,0 +1,16 @@
+[package]
+name = "joker_poker"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "joker_poker"
+path = "src/lib.rs"
+
+[[bin]]
+name = "joker_poker"
+path = "src/main.rs"
+
+[dependencies]
+rand = "0.8"
+thiserror = "1.0"
