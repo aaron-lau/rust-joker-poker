@@ -53,7 +53,7 @@ impl Rank {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Card {
     pub rank: Rank,
     pub suit: Suit,
@@ -63,5 +63,12 @@ pub struct Card {
 impl Card {
     pub fn new(rank: Rank, suit: Suit, is_joker: bool) -> Self {
         Card { rank, suit, is_joker }
+    }
+}
+
+impl std::fmt::Debug for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let joker_str = if self.is_joker { " (Joker)" } else { "" };
+        write!(f, "{:?} of {:?}{}", self.rank, self.suit, joker_str)
     }
 }

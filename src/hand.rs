@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::card::{Card, Rank, Suit};
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HandRank {
@@ -224,6 +225,19 @@ impl Hand {
     }
 }
 
+impl Clone for Hand {
+    fn clone(&self) -> Self {
+        Hand {
+            cards: self.cards.clone(),
+        }
+    }
+}
+
+impl fmt::Debug for Hand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Hand {{ cards: {:?} }}", self.cards)
+    }
+}
 
 #[cfg(test)]
 mod tests {

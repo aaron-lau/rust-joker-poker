@@ -1,8 +1,9 @@
 use std::io::{self, Write};
 use crate::deck::Deck;
 use crate::player::Player;
-use crate::hand::HandRank;
+use crate::hand::{Hand,HandRank};
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum GameState {
     Betting,
     Drawing,
@@ -47,6 +48,14 @@ impl Game {
     }
     
     pub fn get_state(&self) -> &GameState {
+        &self.state
+    }
+
+    pub fn get_pot(&self) -> u32 {
+        self.pot
+    }
+    
+    pub fn get_current_state(&self) -> &GameState {
         &self.state
     }
 
@@ -199,6 +208,10 @@ impl Game {
     }
 
     fn place_bet(&mut self, player_idx: usize, amount: u32) -> Result<u32, &'static str> {
+        if amount < self.min_bet {
+            return Err("Bet amount is below minimum");
+        }
+        
         self.players[player_idx].place_bet(amount)
     }
 
@@ -218,8 +231,84 @@ impl Game {
             println!("Invalid choice, try again");
         }
     }
+    
+    pub fn set_player_hand(&mut self, player_idx: usize, hand: Hand) {
+        if player_idx < self.players.len() {
+            self.players[player_idx].hand = Some(hand);
+        }
+    }
+    
+    pub fn test_place_bet(&mut self, player_idx: usize, amount: u32) -> Result<u32, &'static str> {
+        if amount < self.min_bet {
+            return Err("Bet amount is below minimum");
+        }
+        
+        if player_idx >= self.players.len() {
+            return Err("Invalid player index");
+        }
+        
+        let result = self.players[player_idx].place_bet(amount);
+        
+        // If successful, add to pot
+        if result.is_ok() {
+            self.pot += amount;
+        }
+        
+        result
+    }
+    
+    pub fn test_fold_player(&mut self, player_idx: usize) {
+        if player_idx < self.players.len() {
+            self.players[player_idx].in_round = false;
+        }
+    }
 
     pub fn is_game_over(&self) -> bool {
         matches!(self.state, GameState::GameOver)
+    }
+
+    pub fn set_game_state(&mut self, state: GameState) {
+        self.state = state;
+    }
+    
+    pub fn setup_test_round(&mut self) {
+        self.deck = Deck::new(self.num_jokers);
+        self.deck.shuffle();
+        self.pot = 0;
+        self.state = GameState::Betting;
+        self.current_player = 0;
+        
+        for player in &mut self.players {
+            player.hand = Some(self.deck.deal(5));
+            player.in_round = true;
+            player.add_hand_played();
+        }
+    }
+    
+    pub fn distribute_pot_to_player(&mut self, player_idx: usize) {
+        if player_idx < self.players.len() {
+            self.players[player_idx].chips += self.pot;
+            self.players[player_idx].add_win();
+            self.pot = 0;
+        }
+    }
+    
+    pub fn finish_round(&mut self) {
+        let winner_idx = self.players.iter()
+            .enumerate()
+            .find(|(_, p)| p.in_round)
+            .map(|(idx, _)| idx)
+            .unwrap_or(0);
+        
+        self.distribute_pot_to_player(winner_idx);
+        self.state = GameState::GameOver;
+    }
+
+    pub fn get_players_mut(&mut self) -> &mut Vec<Player> {
+        &mut self.players
+    }
+
+    pub fn set_pot(&mut self, amount: u32) {
+        self.pot = amount;
     }
 }
